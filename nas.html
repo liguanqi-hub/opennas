@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>远程电脑控制与监控面板</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+        }
+        
+        .header p {
+            color: #94a3b8;
+            font-size: 1rem;
+        }
+        
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .desktop-view {
+            flex: 1;
+            min-width: 300px;
+            background-color: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+        }
+        
+        .desktop-header {
+            background-color: #0f172a;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .desktop-header h2 {
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .desktop-header i {
+            color: #3b82f6;
+        }
+        
+        .resolution {
+            background-color: #334155;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+        }
+        
+        .iframe-container {
+            flex-grow: 1;
+            position: relative;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: #000;
+        }
+        
+        .controls-panel {
+            width: 380px;
+            background-color: #1e293b;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .panel-title {
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            text-align: center;
+            color: #f8fafc;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .buttons-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 30px;
+        }
+        
+        .control-button {
+            background: linear-gradient(145deg, #334155, #1e293b);
+            border: none;
+            border-radius: 12px;
+            color: #f1f5f9;
+            padding: 20px 15px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 5px 5px 10px #0f172a, -5px -5px 10px #334155;
+        }
+        
+        .control-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 8px 8px 15px #0f172a, -8px -8px 15px #334155;
+        }
+        
+        .control-button:active {
+            transform: translateY(1px);
+        }
+        
+        .control-button i {
+            font-size: 1.8rem;
+        }
+        
+        .power-on {
+            color: #10b981;
+        }
+        
+        .power-off {
+            color: #ef4444;
+        }
+        
+        .restart {
+            color: #f59e0b;
+        }
+        
+        .force-off {
+            color: #dc2626;
+        }
+        
+        .status-check {
+            color: #3b82f6;
+        }
+        
+        .status-display {
+            background-color: #0f172a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            min-height: 150px;
+        }
+        
+        .status-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: #cbd5e1;
+            font-size: 1.1rem;
+        }
+        
+        .status-content {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            font-family: 'Courier New', monospace;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #3b82f6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #3b82f6;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .action-feedback {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #10b981;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transform: translateX(120%);
+            transition: transform 0.4s ease;
+            z-index: 1000;
+        }
+        
+        .action-feedback.show {
+            transform: translateX(0);
+        }
+        
+        .warning-note {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 25px;
+            font-size: 0.9rem;
+            color: #fca5a5;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #64748b;
+            font-size: 0.9rem;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        @media (max-width: 1100px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .controls-panel {
+                width: 100%;
+            }
+            
+            .desktop-view {
+                min-height: 500px;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .buttons-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fas fa-desktop"></i> 远程电脑控制与监控面板</h1>
+        <p>远程桌面查看与电源控制 | 状态信息实时显示</p>
+    </div>
+    
+    <div class="container">
+        <div class="desktop-view">
+            <div class="desktop-header">
+                <h2><i class="fas fa-eye"></i> 远程桌面视图</h2>
+                <div class="resolution">分辨率: 960p</div>
+            </div>
+            <div class="iframe-container">
+                <!-- 使用HTTP协议避免混合内容问题 -->
+                <iframe 
+                    id="remoteDesktop" 
+                    src="http://fnos.net/liguanqi" 
+                    title="远程桌面" 
+                    allow="fullscreen">
+                </iframe>
+            </div>
+        </div>
+        
+        <div class="controls-panel">
+            <h2 class="panel-title"><i class="fas fa-sliders-h"></i> 远程控制面板</h2>
+            
+            <!-- 修复按钮网格，保持原来的6个按钮布局 -->
+            <div class="buttons-grid">
+                <!-- 开机按钮 -->
+                <button class="control-button" id="powerOn">
+                    <i class="fas fa-power-off power-on"></i>
+                    <span>开机</span>
+                </button>
+                
+                <!-- 关机按钮 -->
+                <button class="control-button" id="powerOff">
+                    <i class="fas fa-power-off power-off"></i>
+                    <span>关机</span>
+                </button>
+                
+                <!-- 重启按钮 -->
+                <button class="control-button" id="restart">
+                    <i class="fas fa-redo restart"></i>
+                    <span>重启</span>
+                </button>
+                
+                <!-- 强制关机按钮 -->
+                <button class="control-button" id="forceOff">
+                    <i class="fas fa-skull-crossbones force-off"></i>
+                    <span>强制关机</span>
+                </button>
+                
+                <!-- 状态获取按钮 - 占两列宽度 -->
+                <button class="control-button" id="getStatus" style="grid-column: span 2;">
+                    <i class="fas fa-sync-alt status-check"></i>
+                    <span>刷新状态信息</span>
+                </button>
+            </div>
+            
+            <div class="warning-note">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>重要提示：</strong> 强制关机可能导致数据丢失，请谨慎使用。建议先尝试普通关机。
+            </div>
+            
+            <!-- 状态显示区域 -->
+            <div class="status-display">
+                <div class="status-title">
+                    <i class="fas fa-server"></i>
+                    <span>设备实时状态</span>
+                    <span id="lastUpdateTime" style="margin-left: auto; font-size: 0.8rem; color: #64748b;"></span>
+                </div>
+                <div class="status-content" id="statusContent">
+                    点击"刷新状态信息"按钮获取设备状态
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="action-feedback" id="actionFeedback">
+        <i class="fas fa-check-circle"></i> 操作已执行！
+    </div>
+    
+    <div class="footer">
+        <p>远程控制面板 &copy; 2023 | 安全操作，请勿滥用 | 最后更新: <span id="currentDate"></span></p>
+    </div>
+
+    <script>
+        // 设置当前日期
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('zh-CN');
+        
+        // API配置
+        const statusUrl = "https://open.iot.vlinkc.com/device/control?action=status&token=TTZrek5qQnZ4U0c0eFdwUVlkcmxvZ0k0eG8zOWRuRnp4SDRueU4xV01SNk5XNUhVOUhhMkxlakNIU2pxYk9vVUdjckcrKzBaQXA4dzFQRjJqOEMzYkEvQks5UnJXOFNhVDJDR0xCdCt4czg9";
+        
+        const baseUrl = "https://open.iot.vlinkc.com/device/control";
+        const token = "TTZrek5qQnZ4U0c0eFdwUVlkcmxvZ0k0eG8zOWRuRnp4SDRueU4xV01SNk5XNUhVOUhhMkxlakNIU2pxYk9vVUdjckcrKzBaQXA4dzFQRjJqOEMzYkEvQks5UnJXOFNhVDJDR0xCdCt4czg9";
+        
+        const endpoints = {
+            powerOn: `${baseUrl}?action=on&token=${token}`,
+            powerOff: `${baseUrl}?action=off&token=${token}`,
+            restart: `${baseUrl}?action=reset&token=${token}`,
+            forceOff: `${baseUrl}?action=off_force&token=${token}`
+        };
+        
+        // 获取DOM元素
+        const powerOnBtn = document.getElementById('powerOn');
+        const powerOffBtn = document.getElementById('powerOff');
+        const restartBtn = document.getElementById('restart');
+        const forceOffBtn = document.getElementById('forceOff');
+        const getStatusBtn = document.getElementById('getStatus');
+        const statusContent = document.getElementById('statusContent');
+        const lastUpdateTime = document.getElementById('lastUpdateTime');
+        const actionFeedback = document.getElementById('actionFeedback');
+        
+        // 显示操作反馈
+        function showFeedback(message, type = 'success') {
+            actionFeedback.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+            actionFeedback.style.backgroundColor = type === 'success' ? '#10b981' : '#ef4444';
+            
+            actionFeedback.classList.add('show');
+            
+            setTimeout(() => {
+                actionFeedback.classList.remove('show');
+            }, 2000);
+        }
+        
+        // 使用JSONP获取状态数据
+        function fetchStatusWithJSONP() {
+            return new Promise((resolve, reject) => {
+                const callbackName = 'jsonp_callback_' + Date.now();
+                const script = document.createElement('script');
+                script.src = statusUrl + '&callback=' + callbackName;
+                script.type = 'text/javascript';
+                
+                window[callbackName] = function(data) {
+                    document.head.removeChild(script);
+                    delete window[callbackName];
+                    resolve(data);
+                };
+                
+                // 设置超时
+                setTimeout(() => {
+                    if (window[callbackName]) {
+                        document.head.removeChild(script);
+                        delete window[callbackName];
+                        reject(new Error('请求超时'));
+                    }
+                }, 10000);
+                
+                document.head.appendChild(script);
+            });
+        }
+        
+        // 使用代理获取状态数据（备用）
+        async function fetchStatusWithProxy() {
+            try {
+                // 使用公共CORS代理
+                const proxyUrl = 'https://api.allorigins.win/raw?url=';
+                const response = await fetch(proxyUrl + encodeURIComponent(statusUrl));
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('代理请求失败:', error);
+                throw error;
+            }
+        }
+        
+        // 获取状态数据
+        async function fetchStatus() {
+            try {
+                // 先尝试JSONP
+                return await fetchStatusWithJSONP();
+            } catch (jsonpError) {
+                console.warn('JSONP失败，尝试代理:', jsonpError);
+                try {
+                    return await fetchStatusWithProxy();
+                } catch (proxyError) {
+                    console.error('所有方式都失败:', proxyError);
+                    throw new Error('无法获取状态数据');
+                }
+            }
+        }
+        
+        // 显示状态数据
+        function displayStatus(data) {
+            const now = new Date();
+            lastUpdateTime.textContent = `最后更新: ${now.toLocaleTimeString('zh-CN')}`;
+            
+            // 美化显示JSON数据
+            statusContent.textContent = JSON.stringify(data, null, 2);
+            
+            // 根据状态改变颜色
+            if (data && data.status === 0) {
+                statusContent.style.borderLeftColor = '#10b981';
+            } else {
+                statusContent.style.borderLeftColor = '#ef4444';
+            }
+        }
+        
+        // 刷新状态信息
+        async function refreshStatus() {
+            showFeedback('正在获取设备状态...', 'info');
+            
+            try {
+                const statusData = await fetchStatus();
+                displayStatus(statusData);
+                showFeedback('状态信息已获取！');
+            } catch (error) {
+                console.error('获取状态失败:', error);
+                statusContent.textContent = `错误: ${error.message}\n\n请检查网络连接或API服务`;
+                statusContent.style.borderLeftColor = '#ef4444';
+                showFeedback('获取状态失败', 'error');
+            }
+        }
+        
+        // 使用JSONP执行控制命令
+        function executeControlCommand(url, actionName) {
+            return new Promise((resolve, reject) => {
+                const callbackName = 'control_callback_' + Date.now();
+                const script = document.createElement('script');
+                script.src = url + '&callback=' + callbackName;
+                script.type = 'text/javascript';
+                
+                window[callbackName] = function(response) {
+                    document.head.removeChild(script);
+                    delete window[callbackName];
+                    resolve(response);
+                };
+                
+                // 设置超时
+                setTimeout(() => {
+                    if (window[callbackName]) {
+                        document.head.removeChild(script);
+                        delete window[callbackName];
+                        resolve({ status: 1, msg: '操作可能已执行，请检查状态' });
+                    }
+                }, 5000);
+                
+                document.head.appendChild(script);
+            });
+        }
+        
+        // 执行控制操作
+        async function executeControl(action, actionName) {
+            showFeedback(`正在执行${actionName}...`, 'info');
+            
+            try {
+                const response = await executeControlCommand(endpoints[action], actionName);
+                showFeedback(`${actionName}操作${response.status === 0 ? '成功' : '完成'}`);
+                
+                // 操作后自动刷新状态
+                setTimeout(refreshStatus, 1500);
+            } catch (error) {
+                console.error(`${actionName}操作失败:`, error);
+                showFeedback(`${actionName}操作执行中，请稍后查看状态`, 'info');
+                
+                // 即使出错也尝试刷新状态
+                setTimeout(refreshStatus, 1500);
+            }
+        }
+        
+        // 按钮事件绑定 - 保持原有的6个按钮功能
+        powerOnBtn.addEventListener('click', () => {
+            if (confirm("确定要远程开机吗？")) {
+                executeControl('powerOn', '开机');
+            }
+        });
+        
+        powerOffBtn.addEventListener('click', () => {
+            if (confirm("确定要远程关机吗？未保存的数据可能会丢失。")) {
+                executeControl('powerOff', '关机');
+            }
+        });
+        
+        restartBtn.addEventListener('click', () => {
+            if (confirm("确定要远程重启电脑吗？所有未保存的数据将丢失。")) {
+                executeControl('restart', '重启');
+            }
+        });
+        
+        forceOffBtn.addEventListener('click', () => {
+            if (confirm("⚠️ 警告：强制关机会导致数据丢失！\n\n确定要继续吗？")) {
+                executeControl('forceOff', '强制关机');
+            }
+        });
+        
+        // 状态获取按钮
+        getStatusBtn.addEventListener('click', refreshStatus);
+        
+        // 页面加载时自动获取状态
+        window.addEventListener('load', () => {
+            setTimeout(refreshStatus, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAS访问验证</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2c3e50);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .logo {
+            color: #fff;
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+        
+        h1 {
+            color: white;
+            margin-bottom: 8px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        
+        .subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .password-container {
+            position: relative;
+            margin-bottom: 25px;
+        }
+        
+        .password-input {
+            width: 100%;
+            padding: 18px 50px 18px 20px;
+            border: none;
+            border-radius: 12px;
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white;
+            font-size: 18px;
+            letter-spacing: 2px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .password-input:focus {
+            background-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 0 2px rgba(100, 150, 255, 0.5);
+        }
+        
+        .password-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: normal;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            font-size: 20px;
+            transition: color 0.3s;
+        }
+        
+        .toggle-password:hover {
+            color: white;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(0, 242, 254, 0.3);
+        }
+        
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+            font-size: 16px;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .error {
+            background-color: rgba(255, 100, 100, 0.2);
+            color: #ff6b6b;
+            border-left: 4px solid #ff6b6b;
+        }
+        
+        .success {
+            background-color: rgba(100, 255, 100, 0.2);
+            color: #6bff6b;
+            border-left: 4px solid #6bff6b;
+        }
+        
+        .hint {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .hint i {
+            margin-right: 8px;
+        }
+        
+        .attempts {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            margin-top: 15px;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 13px;
+        }
+        
+        @media (max-width: 500px) {
+            .container {
+                padding: 30px 25px;
+            }
+            
+            .logo {
+                font-size: 36px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <i class="fas fa-server"></i>
+        </div>
+        <h1>NAS 访问验证</h1>
+        <p class="subtitle">请输入授权密码以访问网络存储服务</p>
+        
+        <form id="passwordForm">
+            <div class="password-container">
+                <input type="password" id="passwordInput" class="password-input" placeholder="请输入访问密码" autocomplete="off" required>
+                <button type="button" class="toggle-password" id="togglePassword">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+            
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <i class="fas fa-unlock-alt"></i> 验证并访问
+            </button>
+        </form>
+        
+        <div class="message" id="message"></div>
+        
+        <div class="attempts" id="attempts">尝试次数: <span id="attemptCount">0</span>/5</div>
+        <div class="footer">
+            <p>© 2023 NAS访问系统 | 仅供授权用户使用</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const passwordForm = document.getElementById('passwordForm');
+            const passwordInput = document.getElementById('passwordInput');
+            const togglePassword = document.getElementById('togglePassword');
+            const message = document.getElementById('message');
+            const attemptCountElement = document.getElementById('attemptCount');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // 正确密码
+            const correctPassword = 'li20130427';
+            
+            // 尝试次数
+            let attempts = 0;
+            const maxAttempts = 5;
+            
+            // 显示/隐藏密码
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                
+                // 切换图标
+                const icon = this.querySelector('i');
+                icon.classList.toggle('fa-eye');
+                icon.classList.toggle('fa-eye-slash');
+            });
+            
+            // 表单提交处理
+            passwordForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const enteredPassword = passwordInput.value.trim();
+                
+                // 检查尝试次数
+                if (attempts >= maxAttempts) {
+                    showMessage('已达到最大尝试次数，请稍后再试。', 'error');
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-ban"></i> 已锁定';
+                    submitBtn.style.background = 'linear-gradient(to right, #ff6b6b, #ff8e8e)';
+                    return;
+                }
+                
+                // 增加尝试次数
+                attempts++;
+                attemptCountElement.textContent = attempts;
+                
+                // 验证密码
+                if (enteredPassword === correctPassword) {
+                    // 密码正确
+                    showMessage('密码验证成功！正在跳转到NAS页面...', 'success');
+                    
+                    // 禁用输入和按钮
+                    passwordInput.disabled = true;
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> 验证成功';
+                    
+                    // 3秒后跳转
+                    setTimeout(() => {
+                        window.location.href = 'nas.html';
+                    }, 2000);
+                } else {
+                    // 密码错误
+                    const remainingAttempts = maxAttempts - attempts;
+                    showMessage(`密码错误！您还有 ${remainingAttempts} 次尝试机会。`, 'error');
+                    
+                    // 清空输入框
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                    
+                    // 如果达到最大尝试次数，锁定
+                    if (attempts >= maxAttempts) {
+                        showMessage('已达到最大尝试次数，系统已锁定。', 'error');
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-ban"></i> 已锁定';
+                        submitBtn.style.background = 'linear-gradient(to right, #ff6b6b, #ff8e8e)';
+                    }
+                }
+            });
+            
+            // 显示消息函数
+            function showMessage(text, type) {
+                message.textContent = text;
+                message.className = 'message ' + type;
+                message.style.display = 'block';
+                
+                // 3秒后自动隐藏消息（成功消息除外）
+                if (type !== 'success') {
+                    setTimeout(() => {
+                        message.style.display = 'none';
+                    }, 4000);
+                }
+            }
+            
+            // 页面加载时自动聚焦到密码输入框
+            passwordInput.focus();
+        });
+    </script>
+</body>
+</html>
